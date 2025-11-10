@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import DeveloperForm from './components/DeveloperForm';
@@ -6,7 +6,7 @@ import DeveloperList from './components/DeveloperList';
 import SearchFilter from './components/SearchFilter';
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_URL = process.env.REACT_APP_API_URL || 'https://developer-directory-backend.onrender.com';
 
 function App() {
   const [developers, setDevelopers] = useState([]);
@@ -15,17 +15,7 @@ function App() {
   const [filterRole, setFilterRole] = useState('All');
   const [loading, setLoading] = useState(false);
 
-  // Fetch developers on component mount
-  useEffect(() => {
-    fetchDevelopers();
-  }, []);
-
-  // Filter developers when search term or role filter changes
-  useEffect(() => {
-    filterDevelopers();
-  }, [searchTerm, filterRole, developers]);
-
-  const fetchDevelopers = async () => {
+  const fetchDevelopers = useCallback(async () => {
     setLoading(true);
     try {
       const response = await axios.get(`${API_URL}/developers`);
@@ -38,9 +28,9 @@ function App() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const filterDevelopers = () => {
+  const filterDevelopers = useCallback(() => {
     let filtered = [...developers];
 
     // Filter by role
@@ -61,7 +51,17 @@ function App() {
     }
 
     setFilteredDevelopers(filtered);
-  };
+  }, [developers, filterRole, searchTerm]);
+
+  // Fetch developers on component mount
+  useEffect(() => {
+    fetchDevelopers();
+  }, [fetchDevelopers]);
+
+  // Filter developers when search term or role filter changes
+  useEffect(() => {
+    filterDevelopers();
+  }, [filterDevelopers]);
 
   const handleAddDeveloper = async (developerData) => {
     try {
